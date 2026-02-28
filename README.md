@@ -106,3 +106,6 @@ USE_DRIFTED_DATA=true docker compose run --rm monitoring-runner
 
 ### S3 Bucket Data Versioning
 ![S3 Bucket](screenshots/S3%20Bucket.png)
+
+### Docker Containers Setup
+![Dockers](screenshots/Dockers.png)
