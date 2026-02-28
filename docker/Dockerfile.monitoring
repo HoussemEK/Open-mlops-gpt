@@ -10,10 +10,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
-# Install Python dependencies
-COPY requirements/monitoring.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies using uv for fast resolution
+ENV PIP_EXTRA_INDEX_URL=https://download.pytorch.org/whl/cpu
+COPY requirements/monitoring.txt /app/
+RUN pip install uv && uv pip install --system --no-cache-dir -r requirements.txt
+RUN zenml integration install evidently mlflow -y
 
 # Copy source code
 COPY src/ /app/src/
@@ -27,5 +30,5 @@ RUN chmod +x /app/wait-for-it.sh
 
 # Default: wait for MLflow + ZenML then run monitoring pipeline
 ENTRYPOINT ["/app/wait-for-it.sh", "mlflow-server:5000", "--", \
-            "/app/wait-for-it.sh", "zenml-server:8080", "--"]
-CMD ["python", "src/pipelines/monitoring_pipeline.py"]
+            "/app/wait-for-it.sh", "zenml-server:8080", "--", \
+            "bash", "-c", "zenml integration install mlflow evidently -y && zenml experiment-tracker register mlflow_tracker --flavor=mlflow --tracking_uri=$MLFLOW_TRACKING_URI --tracking_username=admin --tracking_password=admin || true && zenml orchestrator register local_orch --flavor=local || true && zenml artifact-store register local_store --flavor=local --path=/app/data || true && zenml stack register mlops_stack -e mlflow_tracker -o local_orch -a local_store || true && zenml stack set mlops_stack && if [ \"$USE_DRIFTED_DATA\" = \"true\" ]; then python src/pipelines/monitoring_pipeline.py --drifted; else python src/pipelines/monitoring_pipeline.py; fi"]

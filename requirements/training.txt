@@ -1,6 +1,8 @@
-# Core ML
-torch>=2.0
-torchvision>=0.15
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Core ML (CPU-only to drastically reduce Docker build download size)
+torch==2.6.0+cpu
+torchvision==0.21.0+cpu
 numpy>=1.24
 
 # Data science
@@ -10,7 +12,8 @@ seaborn>=0.12
 
 # MLOps
 mlflow>=2.10
-zenml>=0.60
+zenml[server]>=0.60
+sqlalchemy-utils>=0.40.0
 dvc[s3]>=3.0
 
 # AWS

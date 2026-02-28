@@ -10,10 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
-# Install Python dependencies
+# Install Python dependencies using uv for fast resolution
 COPY requirements/training.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install uv && uv pip install --system --no-cache-dir -r requirements.txt
+RUN zenml integration install mlflow -y
 
 # Copy source code
 COPY src/ /app/src/
@@ -22,7 +24,8 @@ COPY src/ /app/src/
 COPY docker/wait-for-it.sh /app/wait-for-it.sh
 RUN chmod +x /app/wait-for-it.sh
 
-# Default: wait for MLflow + ZenML then run training pipeline
+# Default: wait for MLflow + ZenML, register stack, then run training pipeline
 ENTRYPOINT ["/app/wait-for-it.sh", "mlflow-server:5000", "--", \
-            "/app/wait-for-it.sh", "zenml-server:8080", "--"]
-CMD ["python", "src/pipelines/training_pipeline.py"]
+            "/app/wait-for-it.sh", "zenml-server:8080", "--", \
+            "bash", "-c", "zenml integration install mlflow -y && zenml experiment-tracker register mlflow_tracker --flavor=mlflow --tracking_uri=$MLFLOW_TRACKING_URI --tracking_username=admin --tracking_password=admin || true && zenml orchestrator register local_orch --flavor=local || true && zenml artifact-store register local_store --flavor=local --path=/app/data || true && zenml stack register mlops_stack -e mlflow_tracker -o local_orch -a local_store || true && zenml stack set mlops_stack && python src/pipelines/training_pipeline.py"]
+

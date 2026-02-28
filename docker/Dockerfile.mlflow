@@ -17,6 +17,7 @@ EXPOSE 5000
 
 # MLflow server: SQLite backend + local artefact store
 # Override ARTIFACT_ROOT via env var when using S3
+# --allowed-hosts prevents DNS rebinding 403 errors when called by training-runner
 CMD ["mlflow", "server", \
      "--host", "0.0.0.0", \
      "--port", "5000", \

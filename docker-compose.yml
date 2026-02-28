@@ -19,6 +19,9 @@ services:
       - mlops-network
     env_file:
       - .env
+    environment:
+      - MLFLOW_SERVER_ALLOWED_HOSTS=mlflow-server:5000,localhost:5000
+      - MLFLOW_HTTP_REQUEST_TIMEOUT=600
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 10s
@@ -34,21 +37,22 @@ services:
   zenml-server:
     image: zenmldocker/zenml-server:latest
     container_name: zenml-server
+    user: root
     ports:
       - "8080:8080"
     environment:
       - ZENML_DEFAULT_USER_NAME=admin
       - ZENML_DEFAULT_USER_PASSWORD=admin
       - ZENML_STORE_TYPE=sql
-      - ZENML_STORE_URL=sqlite:////zenml-store/zenml.db
+      - ZENML_STORE_URL=sqlite:////app/zenml-store/zenml.db
     volumes:
-      - zenml-store:/zenml-store
+      - zenml-store:/app/zenml-store
     networks:
       - mlops-network
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -96,6 +100,8 @@ services:
       - mlops-network
     env_file:
       - .env
+    environment:
+      - USE_DRIFTED_DATA=${USE_DRIFTED_DATA:-false}
     depends_on:
       mlflow-server:
         condition: service_healthy
