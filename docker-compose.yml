@@ -1,0 +1,119 @@
+services:
+
+  # ─────────────────────────────────────────────
+  # MLflow Tracking Server + Model Registry
+  # UI: http://localhost:5000
+  # ─────────────────────────────────────────────
+  mlflow-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mlflow
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist MLflow SQLite DB and artefacts across restarts
+      - mlflow-artifacts:/mlflow-artifacts
+      - mlflow-db:/app
+    networks:
+      - mlops-network
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # ZenML Server (Dashboard + Pipeline API)
+  # UI: http://localhost:8080
+  # ─────────────────────────────────────────────
+  zenml-server:
+    image: zenmldocker/zenml-server:latest
+    container_name: zenml-server
+    ports:
+      - "8080:8080"
+    environment:
+      - ZENML_DEFAULT_USER_NAME=admin
+      - ZENML_DEFAULT_USER_PASSWORD=admin
+      - ZENML_STORE_TYPE=sql
+      - ZENML_STORE_URL=sqlite:////zenml-store/zenml.db
+    volumes:
+      - zenml-store:/zenml-store
+    networks:
+      - mlops-network
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Training Runner (one-shot)
+  # Waits for MLflow + ZenML, then runs training_pipeline.py
+  # ─────────────────────────────────────────────
+  training-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.training
+    container_name: training-runner
+    volumes:
+      # Bind-mount data directory so DVC-pulled data is accessible
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - mlops-network
+    env_file:
+      - .env
+    depends_on:
+      mlflow-server:
+        condition: service_healthy
+      zenml-server:
+        condition: service_healthy
+    restart: "no"
+
+  # ─────────────────────────────────────────────
+  # Monitoring Runner (one-shot)
+  # Waits for MLflow + ZenML, then runs monitoring_pipeline.py
+  # ─────────────────────────────────────────────
+  monitoring-runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.monitoring
+    container_name: monitoring-runner
+    volumes:
+      # Bind-mount data and reports so Evidently HTML reports persist on host
+      - ./data:/app/data
+      - ./reports:/app/reports
+    networks:
+      - mlops-network
+    env_file:
+      - .env
+    depends_on:
+      mlflow-server:
+        condition: service_healthy
+      zenml-server:
+        condition: service_healthy
+    restart: "no"
+
+# ─────────────────────────────────────────────
+# Shared bridge network — all services communicate here
+# ─────────────────────────────────────────────
+networks:
+  mlops-network:
+    driver: bridge
+
+# ─────────────────────────────────────────────
+# Named volumes for persistent state
+# ─────────────────────────────────────────────
+volumes:
+  mlflow-artifacts:
+  mlflow-db:
+  zenml-store:

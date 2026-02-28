@@ -1,0 +1,28 @@
+FROM python:3.10-slim
+
+LABEL maintainer="openmlops-challenge"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    bash \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements/training.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ /app/src/
+
+# Copy wait-for-it helper
+COPY docker/wait-for-it.sh /app/wait-for-it.sh
+RUN chmod +x /app/wait-for-it.sh
+
+# Default: wait for MLflow + ZenML then run training pipeline
+ENTRYPOINT ["/app/wait-for-it.sh", "mlflow-server:5000", "--", \
+            "/app/wait-for-it.sh", "zenml-server:8080", "--"]
+CMD ["python", "src/pipelines/training_pipeline.py"]

@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.env
+*.env
+
+# Data & Models (DVC-tracked, not Git)
+data/
+models/
+
+# Reports (generated)
+reports/
+OpenMLOps_Challenge_Plan.md
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# DVC (keep .dvc/ config but not cache)
+/tmp/
+.dvc/cache/
+.dvc/tmp/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# ZenML
+.zen/
+
+# Docker
+*.log

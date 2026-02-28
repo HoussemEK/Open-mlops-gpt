@@ -1,0 +1,8 @@
+# DVC ignore file — patterns here are excluded from DVC tracking
+.git/
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
