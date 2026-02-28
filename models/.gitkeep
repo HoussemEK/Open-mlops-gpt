@@ -1,0 +1,2 @@
+# This directory is tracked by DVC (not Git).
+# Use `dvc pull` to fetch exported model artefacts after cloning.

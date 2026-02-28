@@ -23,3 +23,4 @@ onnxruntime>=1.16
 # Utilities
 tqdm>=4.65
 Pillow>=9.5
+sympy==1.13.1

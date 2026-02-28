@@ -16,8 +16,7 @@ env/
 *.env
 
 # Data & Models (DVC-tracked, not Git)
-data/
-models/
+# DVC will manage internal .gitignore files for these.
 
 # Reports (generated)
 reports/

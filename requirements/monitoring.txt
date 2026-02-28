@@ -21,3 +21,4 @@ Pillow>=9.5
 
 # Utilities
 tqdm>=4.65
+sympy==1.13.1
