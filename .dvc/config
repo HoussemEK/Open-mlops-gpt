@@ -1,15 +1,5 @@
-# DVC configuration file
-# This is committed to Git.
-# The actual data tracked by DVC is NOT committed to Git.
-#
-# To set up the remote, run:
-#   dvc remote add -d s3remote s3://${S3_BUCKET_NAME}/dvc-store
-#   dvc remote modify s3remote region us-east-1
-#
-# Generated after running: dvc init
-
 [core]
     remote = s3remote
-
-[remote "s3remote"]
-    url = s3://your-dvc-bucket-name/dvc-store
+['remote "s3remote"']
+    url = s3://openmlops-dvc/dvc-store
+    region = us-east-1
